@@ -1,6 +1,6 @@
 branch-defaults:
   default:
-    environment: null
+    environment: myproject
     group_suffix: null
 environment-defaults:
   myproject:
@@ -9,8 +9,8 @@ environment-defaults:
 global:
   application_name: myproject
   branch: null
-  default_ec2_keyname: aws-eb
-  default_platform: python3.4
+  default_ec2_keyname: null
+  default_platform: Python 3.4
   default_region: us-west-2
   include_git_submodules: true
   instance_profile: null
