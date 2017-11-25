@@ -4,6 +4,8 @@ from django.template import RequestContext
 from django.http import HttpResponseRedirect, HttpResponse
 from django.core.urlresolvers import reverse
 
+from django.views.decorators.csrf import csrf_exempt
+
 from myproject.myapp.models import Document
 from myproject.myapp.models import User
 from myproject.myapp.forms import DocumentForm
@@ -19,10 +21,11 @@ def new_guid(request):
     user.name = 'New User'
     user.save()
     # request.session['guid_id'] = user.pk
-    return HttpResponseRedirect(reverse('upload',
+    return HttpResponseRedirect(reverse('gallery',
                                         kwargs={'guid_id': user.pk}))
 
 
+@csrf_exempt
 def upload(request, guid_id):
 
     user = get_object_or_404(User, pk=guid_id)
@@ -37,8 +40,8 @@ def upload(request, guid_id):
             point.plotRandomPointsComplexity(n=2e4, constant=0.01, power=1.3)
             new_stringIO = io.BytesIO()
             point.out.convert('RGB').save(new_stringIO,
-                                              orig_file.content_type.split('/')
-                                              [-1].upper())
+                                          orig_file.content_type.split('/')
+                                          [-1].upper())
             new_file = InMemoryUploadedFile(new_stringIO,
                                             u"docfile",  # change this?
                                             (orig_file.name.split('.')[0] +
@@ -58,7 +61,7 @@ def upload(request, guid_id):
         form = DocumentForm()  # A empty, unbound form
 
     # Load documents for the upload page
-    all_documents = user.document_set.all()
+    all_documents = user.document_set.order_by("-id")
     documents = []
     for document in all_documents:
             if document.docfile.name[-16:] == 'pointillized.jpg':
@@ -72,7 +75,7 @@ def upload(request, guid_id):
     )
 
 
-def gallery(request):
+def gallery(request, guid_id):
 
     all_documents = Document.objects.order_by("-id")
     documents = []
@@ -80,4 +83,5 @@ def gallery(request):
         if ((document.docfile.name[-16:] == 'pointillized.jpg') & (document.gallery)):
             documents.append(document)
 
-    return render(request, 'gallery.html', {'documents': documents})
+    return render(request, 'gallery.html', {'documents': documents,
+                                            'guid_id': guid_id})
