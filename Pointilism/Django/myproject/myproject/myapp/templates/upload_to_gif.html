@@ -5,14 +5,12 @@
         <title>Pointillizer!</title>
 
         <script type="text/javascript"> 
-            function showHide() {
-                var x = document.getElementById("loadingimage");
-                if (x.style.display === "none") {
-                    x.style.display = "block";
-                } else {
-                    x.style.display = "none";
-                }
-            }
+            function showHide(){ 
+            //create an object reference to the div containing images 
+            var oimageDiv=document.getElementById('loadingimage') 
+            //set display to inline if currently none, otherwise to none 
+            oimageDiv.style.display=(oimageDiv.style.display=='none')?'inline':'none' 
+            } 
         </script>
 
     </head>
@@ -45,6 +43,20 @@
             border:none;
         }
 
+        #button:hover {
+            /*background:lightgrey;
+            box-shadow: 0px 0px 1px #777;*/
+        }
+
+        .images {
+            display: block;
+            width: 80%;
+            height: auto;
+            padding: 5px;
+            max-width: 375px;
+            margin: 0 auto;
+        }
+
     </style>
     <body>
     <div class="main">
@@ -62,10 +74,11 @@
 
         <!-- Image upload section-->
         <h2>Upload an image:</h2>
-        <form action="{% url "upload" guid_id=guid_id %}" method="post" enctype="multipart/form-data" id="form">
+        <form action="{% url "gif" guid_id=guid_id %}" method="post" enctype="multipart/form-data" id="form">
 
             <p><input type="file" name="docfile" id="button" style="width: 200px" />
-            <p><input type="submit" value="Upload" id="button" onclick='showHide()'></p>
+            <p><input type="submit" name="submit" value="Upload" id="button"
+                onclick='javascript:showHide()'></p>
         </form>
             <div id="loadingimage" style="display:none">
                 Loading, please wait...
@@ -74,17 +87,18 @@
         <!-- List of uploaded images -->
         <h2>Your Images:</h2>
         <!--(User {{ guid_id }})-->
-        {% load thumbnail %}
+        <div class="images">{% load thumbnail %}
         {% if documents %}
                 {% for document in documents %}
                     {% thumbnail document.docfile.url "300x300" crop="center" as im %}
-                    <a href="{{ document.docfile.url }}"><img src="{{ im.url }}"></a>
+                    <a href="{{ document.docfile.url }}"><img src="{{ document.docfile.url }}" width="100%"></a>
                     {% endthumbnail %}
                     <br>
                 {% endfor %}
         {% else %}
             <p>No images yet, upload one!</p>
         {% endif %}
+        </div>
     </div>
     </body>
 

@@ -110,6 +110,20 @@ class pointillize:
         self._build_array()
         self._newImage(self.border)
 
+    def resize(self, ratio, min_size):
+        """Resizes by ratio, or to min diagonal size in pixels"""
+
+        w = self.image.size[0]
+        h = self.image.size[1]
+        d = (h**2 + w**2)**0.5
+        ratio = max(ratio, min_size / d)
+
+        self.image = self.image.resize([int(w * ratio),
+                                       int(h * ratio)])
+
+        self._build_array()
+        self._newImage(self.border)
+
     def display(self, **kwargs):
         """Displays browser-size version of outputs, or original images
         if original=True"""
@@ -356,12 +370,12 @@ class pointillizeStack(pointillize):
         if to_print:
             print('done')
 
-    def build_multipliers(self, set):
+    def build_multipliers(self, set, **kwargs):
         """Plots the point queue repeatedly with multipliers from list set"""
         self.image_stack = []
 
         to_print = self.debug
-
+        reverse = kwargs.get('reverse', False)
         n = len(set)
         if to_print:
             print('Building image: ', end=' ')
@@ -370,6 +384,10 @@ class pointillizeStack(pointillize):
                 print(j + 1, end=' ')
             self._plotQueue(set[j])
             self.image_stack.append(self.out)
+
+        if reverse:
+            self.image_stack += self.image_stack[::-1]
+
         if to_print:
             print('done')
 
@@ -380,7 +398,7 @@ class pointillizeStack(pointillize):
         for out in self.image_stack:
             arrays.append(np.array(out))
 
-        imageio.mimsave(location, arrays, duration=step_duration)
+        imageio.mimsave(location, arrays, format='gif', duration=step_duration)
 
 
 class pointillizePile(pointillizeStack):
@@ -458,6 +476,7 @@ class pointillizePile(pointillizeStack):
                              step_duration, **kwargs):
 
         suffix = kwargs.get('suffix', '')
+        reverse = kwargs.get('reverse', False)
 
         if os.path.isdir(location) is not True:
             os.makedirs(location)
@@ -466,6 +485,6 @@ class pointillizePile(pointillizeStack):
             print(i + 1, end=' ')
             self._init_pointilize(i)
             self.run_queue()
-            self.build_multipliers(multipliers)
+            self.build_multipliers(multipliers, reverse=reverse)
             self.save_gif(location + '/' + self.filename.split('/')[1] +
                           ' ' + suffix + '.gif', step_duration, **kwargs)
