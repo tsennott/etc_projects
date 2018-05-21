@@ -15,11 +15,11 @@ import pandas as pd
 class NYTReader:
     """Reads NYT article API"""
 
-    def __init__(self):
+    def __init__(self, key=None):
 
         # set initial params
+        if key is None: raise(Exception("must define API key"))
         self.url = 'https://api.nytimes.com/svc/search/v2/articlesearch.json'
-        key = '6940176db80043d5a17343d873cfc82e'
         fields = 'web_url, snippet, lead_paragraph, headline, keywords, pub_date'
         
         self.params = {
