@@ -44,7 +44,8 @@ class WordArt:
 
     def make_wordcloud(self, text, filename, image=None, colormap='viridis', 
                        background='white', max_words=4000, additional_stopwords=None,
-                      desktop=False, max_size = (1920, 1080), reset_stopwords=False,):
+                      desktop=False, max_size=(1920, 1080), reset_stopwords=False,
+                      thumbnail_max_size=None):
 
         # import and add stopwords
         if not reset_stopwords:    
@@ -106,13 +107,21 @@ class WordArt:
                 os.remove(background_filename)
                 wc_image.close()
                 os.remove(filename)
-                
+
+                #resize thumbnail to be returned
+                if thumbnail_max_size is not None:
+                    resize_factor = min([1, thumbnail_max_size[0]/image.size[0], thumbnail_max_size[1]/image.size[1]])
+                    desktop = desktop.resize((int(image.size[0]*resize_factor), int(image.size[1]*resize_factor)))
                 return desktop
             
             # clean up files
             wc_image.close()
             os.remove(filename)
                     
+            #resize thumbnail to be returned
+            if thumbnail_max_size is not None:
+                resize_factor = min([1, thumbnail_max_size[0]/image.size[0], thumbnail_max_size[1]/image.size[1]])
+                wc_w_background = wc_w_background.resize((int(image.size[0]*resize_factor), int(image.size[1]*resize_factor)))
             return wc_w_background
 
         else:

@@ -16,7 +16,7 @@ from words_api import TwitterReader
 if __name__ == '__main__':
     
     # grab settings file 
-    settings_file = 'example_twitter_desktop_background_settings.json'
+    settings_file = 'script_twitter_desktop_settings.json'
 
     # try to parse all settings
     try:
