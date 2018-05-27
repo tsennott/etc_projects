@@ -24,7 +24,8 @@ class WordArt:
         # resize if required
         if max_size is not None:
             resize_factor = min([1, max_size[0]/image.size[0], max_size[1]/image.size[1]])
-            image = image.resize((int(image.size[0]*resize_factor), int(image.size[1]*resize_factor)))
+            image = image.resize((int(image.size[0]*resize_factor), 
+                                    int(image.size[1]*resize_factor)))
 
         # rotate if required
         image = image.rotate(rotate, expand=True)
@@ -44,13 +45,18 @@ class WordArt:
 
     def make_wordcloud(self, text, filename, image=None, colormap='viridis', 
                        background='white', max_words=4000, additional_stopwords=None,
-                      desktop=False, max_size=(1920, 1080), reset_stopwords=False,
-                      thumbnail_max_size=None):
+                      desktop=False, max_size=(1920, 1080), reset_stopwords=False,):
+        """
+        Makes a wordcloud, with added features like background fill and desktop modes.
+        Can optionally add additional stopwords (words to keep out of image), or 
+        reset the standard stopwords and define them all yourself.
+        """
 
         # import and add stopwords
         if not reset_stopwords:    
             stopwords = set(STOPWORDS)
-            stopwords_to_add = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+            stopwords_to_add = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 
+                                'Friday', 'Saturday', 'Sunday']
         else:
             stopwords=set([])
             stopwords_to_add = []
@@ -66,7 +72,8 @@ class WordArt:
         if image is not None:
             # resize
             resize_factor = min([1, max_size[0]/image.size[0], max_size[1]/image.size[1]])
-            image = image.resize((int(image.size[0]*resize_factor), int(image.size[1]*resize_factor)))
+            image = image.resize((int(image.size[0]*resize_factor), 
+                                    int(image.size[1]*resize_factor)))
             
             #define mask as np array
             mask = np.array(image)
@@ -94,7 +101,8 @@ class WordArt:
                 
                 # resize for desktop (in case previous image was too large)
                 resize_factor = min([1, 1920/image.size[0], 1080/image.size[1]])
-                image = image.resize((int(image.size[0]*resize_factor), int(image.size[1]*resize_factor)))
+                image = image.resize((int(image.size[0]*resize_factor), 
+                                        int(image.size[1]*resize_factor)))
                 
                 # make image
                 desktop = Image.new(size=(1920, 1080), color=background, mode='RGB')
@@ -108,20 +116,12 @@ class WordArt:
                 wc_image.close()
                 os.remove(filename)
 
-                #resize thumbnail to be returned
-                if thumbnail_max_size is not None:
-                    resize_factor = min([1, thumbnail_max_size[0]/image.size[0], thumbnail_max_size[1]/image.size[1]])
-                    desktop = desktop.resize((int(image.size[0]*resize_factor), int(image.size[1]*resize_factor)))
                 return desktop
             
             # clean up files
             wc_image.close()
             os.remove(filename)
                     
-            #resize thumbnail to be returned
-            if thumbnail_max_size is not None:
-                resize_factor = min([1, thumbnail_max_size[0]/image.size[0], thumbnail_max_size[1]/image.size[1]])
-                wc_w_background = wc_w_background.resize((int(image.size[0]*resize_factor), int(image.size[1]*resize_factor)))
             return wc_w_background
 
         else:
