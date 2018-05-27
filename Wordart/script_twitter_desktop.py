@@ -66,6 +66,7 @@ if __name__ == '__main__':
                    additional_stopwords=['https', 'co', 'amp', 'RT'], 
                    reset_stopwords=False, desktop=True)
 
+    # remove old image to only keep freshest images
     try:
         os.remove(directory + '/' + '{:06d}'.format(i-images_to_keep) + '_desktop.png')
     except:
