@@ -98,15 +98,42 @@ class WordsAPI:
 
         return words
 
-    def search_source(self, source, search):
-        try:
-            text_list = self.text_sources[source]
-        except:
-            print('Source not found')
+    
+    def get_single_entity(self, i):
+        """Prints a representation of the complete ith source"""
 
-        for text in text_list:
-            if search in text:
-                print('Match: %s' % text)
+        for key in self.text_sources.keys():
+            print('%s: %s' % (key[:-1].upper(), self.text_sources[key][i]))
+        print('DATETIME: %s' % str(self.meta['dates'][i]))
+        print('\n', end='')
+
+
+    def search(self, search, source=None, return_all=True):
+        """Searches optional source or all sources for text, 
+        prints matching complete source or just the specified source
+        if return_all is False"""
+
+        if source is not None:
+            try:
+                source_list = [self.text_sources[source]]
+            except:
+                print('Source not found')
+        else: 
+            source_list = self.text_sources
+
+        # loop through sources
+        count = 0
+        for key in source_list.keys():
+            # loop through entities
+            for i, text in enumerate(source_list[key]):
+                # get match and print as specified
+                if search in text:
+                    count += 1
+                    if return_all:
+                        self.get_single_entity(i)
+                    else:
+                        print('Match: %s' % text)
+        if count == 0: print('No matches found')
 
 
 class NYTReader(WordsAPI):
@@ -178,16 +205,23 @@ class NYTReader(WordsAPI):
             snippets.append(doc['snippet']) 
 
             # get all keywords, if they exist and if they are not material type
-            if len(doc['keywords']) > 0: 
+            item_keywords = []
+            if len(doc['keywords']) > 0:     
                 for keyword in  doc['keywords']:
                     if keyword['name'] not in ('type_of_material'):
-                        keywords.append(keyword['value'])
+                        item_keywords.append(keyword['value'])
+            keywords.append(' | '.join(item_keywords))
 
         self.text_sources = {
             'headlines': headlines,
             'snippets': snippets,
             'keywords': keywords,
         }
+        
+        self.meta = {
+            'dates': [x['pub_date'] for x in self.docs]
+        }
+
 
     def get_search_term(self, search=None, article_limit=50, begin_date=None, end_date=None, verbose=False):
         """ Fetches results for a search string and/or a date range of string format YYYMMDD"""
@@ -204,8 +238,8 @@ class NYTReader(WordsAPI):
 
         # print if verbose
         if verbose: print('Got %d docs, from %s to %s' % (len(self.docs), 
-                                                            min([x['pub_date'] for x in self.docs]), 
-                                                            max([x['pub_date'] for x in self.docs]))
+                                                            min(self.meta['dates']), 
+                                                            max(self.meta['dates']))
                                                         )
 
 
@@ -240,6 +274,7 @@ class TwitterReader(WordsAPI):
         tweets = []
         names = []
         descriptions = []
+        screen_names = []
 
         # loop to read in content up to limit
         n = 0
@@ -257,6 +292,7 @@ class TwitterReader(WordsAPI):
                 for tweet in content['statuses']:
                     tweets.append(tweet['text'])
                     names.append(tweet['user']['name'])
+                    screen_names.append(tweet['user']['screen_name'])
                     descriptions.append(tweet['user']['description']) 
             except:
                 if verbose: print('Request failed, only got %d tweets' % len(tweets))
@@ -274,8 +310,14 @@ class TwitterReader(WordsAPI):
         self.text_sources = {
             'tweets': tweets,
             'names': names,
+            'screen_names': screen_names,  
             'descriptions': descriptions,
         }
+
+        self.meta = {
+            'dates': self._get_dates()
+        }
+
 
 
     def _get_streaming_request(self, url, params, tweet_limit, verbose):
@@ -286,6 +328,7 @@ class TwitterReader(WordsAPI):
         # temp containers for contents
         tweets = []
         names = []
+        screen_names = []
         descriptions = []
 
         # open stream
@@ -305,6 +348,7 @@ class TwitterReader(WordsAPI):
                 self.content_list.append(response)
                 tweets.append(response['text'])
                 names.append(response['user']['name'])
+                screen_names.append(response['user']['screen_name'])
                 descriptions.append(response['user']['description'])
             except:
                 print('Stream exhausted, got %d tweets' % len(tweets))
@@ -313,7 +357,13 @@ class TwitterReader(WordsAPI):
         self.text_sources = {
             'tweets': tweets,
             'names': names,
+            'screen_names': screen_names,
             'descriptions': descriptions,
+        }
+
+
+        self.meta = {
+            'dates': self._get_dates(streaming=True)
         }
 
 
@@ -324,7 +374,7 @@ class TwitterReader(WordsAPI):
         return remaining
 
 
-    def _get_dates(self, streaming):
+    def _get_dates(self, streaming=False):
         dates = []
         if streaming:
             for tweet in self.content_list:
@@ -336,9 +386,9 @@ class TwitterReader(WordsAPI):
         return dates
 
 
-    def _print_response(self, streaming=False):
+    def _print_response(self):
         if len(self.text_sources['tweets']) > 0: 
-            dates = self._get_dates(streaming)
+            dates = self.meta['dates']
             print('Got %d tweets from %s to %s, allowance now %d requests' % (
                                             len(self.text_sources['tweets']),
                                             str(min(dates)),
@@ -378,6 +428,6 @@ class TwitterReader(WordsAPI):
         self._get_streaming_request(self.recent_url, params, tweet_limit, verbose)
 
         # print if verbose
-        if verbose: self._print_response(streaming=True)
+        if verbose: self._print_response()
         
         

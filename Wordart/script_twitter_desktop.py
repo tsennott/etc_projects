@@ -3,6 +3,7 @@
 """
 This script can be run periodically to create background 
 images based on a search and a masking image
+
 """
 
 import json
@@ -25,6 +26,7 @@ if __name__ == '__main__':
                 client_secret=twitter_auth_dict['client_secret'],
                 resource_owner_key=twitter_auth_dict['resource_owner_key'],
                 resource_owner_secret=twitter_auth_dict['resource_owner_secret'])
+
         directory = settings['directory_for_images']
         source_image = settings['image']['source']
         invert = settings['image']['invert']
@@ -33,8 +35,8 @@ if __name__ == '__main__':
         tweet_limit = settings['tweet_limit']
         images_to_keep = settings['images_to_keep']
 
-    except:
-        print('Invalid settings file')
+    except Exception as e:
+        print('Invalid settings file, error is: \n %s' % e)
         sys.exit()
 
 
