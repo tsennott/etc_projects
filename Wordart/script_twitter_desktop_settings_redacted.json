@@ -1,0 +1,17 @@
+ {
+    "directory_for_images": "C:/Users/tsenn/Documents/GitHub/etc_projects/Wordart/wallpapers",
+    "image": {
+        "source": "C:/Users/tsenn/Documents/GitHub/etc_projects/Wordart/source images/Location_Map_San_Francisco_Bay_Area_edited.gif",
+        "invert": 0,
+        "transparency": 0
+            },
+    "twitter-auth": {
+                "client_key": "", 
+                "client_secret": "", 
+                "resource_owner_key": "", 
+                "resource_owner_secret":""
+                    },
+    "geo_to_use": "37.817941,-122.352714,20mi",
+    "tweet_limit": 500,
+    "images_to_keep": 3
+ }
