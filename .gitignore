@@ -24,5 +24,7 @@ movies
 composite
 etc
 images_bulk
+images_aws
+images_bulk_out
 IAM User.csv
 

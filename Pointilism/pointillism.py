@@ -122,7 +122,7 @@ class pointillize:
             self.image = self.image.crop((w // 2 - w_new // 2, 0,
                                           w // 2 + w_new // 2, h))
         else:
-            ValueError: 'Invalid direction argument'
+            raise ValueError('Invalid direction argument')
 
         if resize:
             self.image = self.image.resize([aspect[0], aspect[1]])
@@ -140,13 +140,14 @@ class pointillize:
         elif kind == 'color':
             self.image = ImageEnhance.Color(self.image).enhance(amount)
         else:
-            Exception: 'Invalid Type'
+            raise Exception('Invalid Type')
 
         self._build_array()
         self._newImage(self.border)
 
     def resize(self, ratio, min_size):
-        """Resizes by ratio, or to min diagonal size in pixels"""
+        """Resizes by ratio, or to min diagonal size in pixels, 
+        whichever is larger"""
 
         w = self.image.size[0]
         h = self.image.size[1]
@@ -197,9 +198,13 @@ class pointillize:
         y = range(bottom, top)
         if len(x) == 0 | len(y) == 0:
             return (255, 255, 255)
-        R = int(self.array[np.ix_(y, x, [0])].mean())
-        G = int(self.array[np.ix_(y, x, [1])].mean())
-        B = int(self.array[np.ix_(y, x, [2])].mean())
+        # R = int(self.array[np.ix_(y, x, [0])].mean())
+        # G = int(self.array[np.ix_(y, x, [1])].mean())
+        # B = int(self.array[np.ix_(y, x, [2])].mean())
+        R = int(self.array[bottom:top, left:right, [0]].mean())
+        G = int(self.array[bottom:top, left:right, [1]].mean())
+        B = int(self.array[bottom:top, left:right, [2]].mean())
+
         return (R, G, B)
 
     def _plotColorPoint(self, loc, r, mask=False, **kwargs):
@@ -294,9 +299,9 @@ class pointillize:
             y = range(bottom, top)
             if len(x) == 0 | len(y) == 0:
                 return 0
-            R = array[np.ix_(y, x, [0])].max() - array[np.ix_(y, x, [0])].min()
-            G = array[np.ix_(y, x, [1])].max() - array[np.ix_(y, x, [1])].min()
-            B = array[np.ix_(y, x, [2])].max() - array[np.ix_(y, x, [2])].min()
+            R = array[bottom:top, left:right, [0]].max() - array[bottom:top, left:right, [0]].min()
+            G = array[bottom:top, left:right, [1]].max() - array[bottom:top, left:right, [1]].min()
+            B = array[bottom:top, left:right, [2]].max() - array[bottom:top, left:right, [2]].min()
             if (np.isnan(R) | np.isnan(G) | np.isnan(B)):
                 R, G, B = 0, 0, 0
             return 1 - (R + G + B) / (255 * 3.0)
@@ -386,8 +391,9 @@ class pointillize:
                 r = self._getRadiusFromComplexity(d, power, constant, min_size, complexity)
                 self._plotColorPoint(loc, r, use_transparency=use_transparency,
                                         alpha_fcn=alpha_fcn, mask=True)
-                self.radius_list.append(r)
-                self.complexity_list.append(complexity)
+                if self.debug: 
+                    self.radius_list.append(r)
+                    self.complexity_list.append(complexity)
                 points +=1
                 count = 0
 
@@ -398,47 +404,46 @@ class pointillize:
     def _makeMetaSettings(self):
 
         self.settings = {
-                    'uniform': {   
-                            'PlotRecPoints': {'n': 80},
-                            'PlotPointsComplexity': {'constant': 0.004, 'power': 1, 'grad_size': 10, 'min_size': 0.004}
-                        }, 
-                    'coarse': {
-                            'PlotRecPoints': {'n': 40},
-                            'PlotPointsComplexity': {'constant': 0.02, 'power': 2, 'grad_size': 20, 'min_size': 0.004}            
-                        }, 
-                    'balanced': {
-                            'PlotRecPoints': {'n': 80},
-                            'PlotPointsComplexity': {'constant': 0.012, 'power': 3, 'grad_size': 10, 'min_size': 0.002}
-                        }, 
-                    'fine': {
-                            'PlotRecPoints': {'n': 100},
-                            'PlotPointsComplexity': {'constant': 0.008, 'power': 3, 'grad_size': 10, 'min_size': 0.001}
-                        },
-                    'ultrafine': {
-                            'PlotRecPoints': {'n': 150},
-                            'PlotPointsComplexity': {'constant': 0.005, 'power': 3, 'grad_size': 10, 'min_size': 0.0005}           
-                        },
-                   }
+            'uniform': {
+                'PlotRecPoints': {'n': 40, 'fill': (self.border == 0)},
+                'PlotPointsComplexity': {'constant': 0.004, 'power': 1, 'grad_size': .005, 'min_size': 0.004}
+            }, 
+            'coarse': {
+                'PlotRecPoints': {'n': 20, 'fill': (self.border == 0)},
+                'PlotPointsComplexity': {'constant': 0.016, 'power': 2, 'grad_size': .019, 'min_size': 0.004}
+            },
+            'balanced': {
+                'PlotRecPoints': {'n': 100, 'fill': (self.border == 0)},
+                'PlotPointsComplexity': {'constant': 0.012, 'power': 3, 'grad_size': .015, 'min_size': 0.002}
+            },
+            'fine': {
+                'PlotRecPoints': {'n': 100, 'fill': (self.border == 0)},
+                'PlotPointsComplexity': {'constant': 0.008, 'power': 3, 'grad_size': .01, 'min_size': 0.001}
+            },
+            'ultrafine': {
+                'PlotRecPoints': {'n': 100, 'fill': (self.border == 0)},
+                'PlotPointsComplexity': {'constant': 0.005, 'power': 3, 'grad_size': .006, 'min_size': 0.0005}
+            },
+        }
 
-
-    def plot(self, setting='balanced', n=1e5, max_skips=2e3, 
-                use_transparency=False, alpha_fcn=lambda: 255,):
+    def plot(self, setting='balanced', n=1e5, max_skips=2e3,
+             use_transparency=False, alpha_fcn=lambda: 255,):
         """Makes plots with present settings and optional arguments"""
 
-        self._makeMetaSettings() #TODO MOVE TO INIT
+        self._makeMetaSettings()  # TODO MOVE TO INIT
 
         if setting not in self.settings.keys():
-            Exception: "Invalid setting"
+            raise Exception("Invalid setting")
 
         frame_is_top = (inspect.currentframe().
-                f_back.f_code.co_name == '<module>')
+                        f_back.f_code.co_name == '<module>')
         to_print = True if self.debug & frame_is_top else False
         start = time.time()
 
         self.plotRecPoints(**self.settings[setting]['PlotRecPoints'])
         self.plotRandomPointsComplexity(**self.settings[setting]['PlotPointsComplexity'])
 
-        if to_print: print('done in %0.2f seconds' % (time.time()-start))
+        if to_print: print('done in %0.2f seconds' % (time.time() - start))
 
     def _queueColorPoint(self, loc, r, color):
         """Builds queue of color points"""
@@ -462,8 +467,12 @@ class pointillize:
                          color + (255,))
 
     def _makeComplexityArray(self, sigma1, sigma2, multiplier=.8):
+
+        h = self.array.shape[0]
+        w = self.array.shape[1]
+        d = (h**2 + w**2)**0.5
         gradient = ndimage.gaussian_gradient_magnitude(self.array.sum(axis=2), sigma=sigma1)
-        gradient2 = ndimage.maximum_filter(gradient, size=sigma2)
+        gradient2 = ndimage.maximum_filter(gradient, size=d*sigma2)
 
         #gradient_sum = gradient + gradient2
         self.array_complexity = 1 - gradient2/gradient2.max()*multiplier-(1-multiplier)
@@ -679,7 +688,7 @@ class pointillizePile(pointillizeStack):
             self.pile_filenames = []
             if os.path.isdir(location):
                 for file in os.listdir(location):
-                    if file.endswith(".jpg") | file.endswith(".JPG"):
+                    if file.endswith(".jpg") | file.endswith(".JPG") | file.endswith(".jpeg") | file.endswith(".JPEG"):
                         self.pile_filenames.append(location + file)
             else:
                 raise ValueError('Must declare directory to initialize')
@@ -724,6 +733,7 @@ class pointillizePile(pointillizeStack):
             self.inputs_store.append(self.image)
             self.outputs_store.append(self.out)
         print('done....took %0.2f seconds' % (time.time()-start))
+
 
     def run_pile_gifs(self, location, n, save_steps, step_duration, **kwargs):
 
